@@ -12,7 +12,17 @@
 #    under the License.
 
 from varroa.api.v1.resources import ip_usage
+from varroa.api.v1.resources import security_risk
+from varroa.api.v1.resources import security_risk_type
 
 
 def initialize_resources(api):
     api.add_resource(ip_usage.IPUsageList, "/v1/ip-usage/")
+    api.add_resource(
+        security_risk_type.SecurityRiskTypeList, '/v1/security-risk-types/'
+    )
+    api.add_resource(
+        security_risk_type.SecurityRiskType, '/v1/security-risk-types/<id>/'
+    )
+    api.add_resource(security_risk.SecurityRiskList, '/v1/security-risks/')
+    api.add_resource(security_risk.SecurityRisk, '/v1/security-risks/<id>/')

@@ -84,16 +84,52 @@ class TestCase(flask_testing.TestCase):
         db.session.commit()
         return ip_usage
 
+    def create_security_risk_type(
+        self, name='ssh-password', description="Don't allow root to ssh"
+    ):
+        sr_type = models.SecurityRiskType(name=name, description=description)
+        db.session.add(sr_type)
+        db.session.commit()
+        return sr_type
+
+    def create_security_risk(
+        self,
+        ipaddress='203.0.113.1',
+        time=datetime.datetime(2020, 2, 3),
+        expires=datetime.datetime(2020, 3, 3),
+        project_id=None,
+    ):
+        sr_type = self.create_security_risk_type()
+
+        sr = models.SecurityRisk(
+            ipaddress=ipaddress,
+            time=time,
+            type_id=sr_type.id,
+            expires=expires,
+        )
+        sr.project_id = project_id
+        db.session.add(sr)
+        db.session.commit()
+        return sr
+
 
 class TestKeystoneWrapper:
-    def __init__(self, app, roles):
+    def __init__(self, app, roles, system_scope=False):
         self.app = app
         self.roles = roles
+        self.system_scope = system_scope
 
     def __call__(self, environ, start_response):
-        cntx = context.RequestContext(
-            roles=self.roles, project_id=PROJECT_ID, user_id=USER_ID
-        )
+        context_args = {
+            'roles': self.roles,
+            'user_id': USER_ID,
+        }
+        if self.system_scope:
+            context_args['system_scope'] = 'all'
+        else:
+            context_args['project_id'] = PROJECT_ID
+
+        cntx = context.RequestContext(**context_args)
         environ[keystone.REQUEST_CONTEXT_ENV] = cntx
 
         return self.app(environ, start_response)
@@ -101,10 +137,13 @@ class TestKeystoneWrapper:
 
 class ApiTestCase(TestCase):
     ROLES = ["member"]
+    SYSTEM_SCOPE = False
 
     def setUp(self):
         super().setUp()
         self.init_context()
 
     def init_context(self):
-        self.app.wsgi_app = TestKeystoneWrapper(self.app.wsgi_app, self.ROLES)
+        self.app.wsgi_app = TestKeystoneWrapper(
+            self.app.wsgi_app, self.ROLES, self.SYSTEM_SCOPE
+        )

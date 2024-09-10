@@ -90,6 +90,8 @@ class NotificationEndpoints:
             db.session.add(ip_usage)
             db.session.commit()
 
+        # TODO(sorrison) Delete all security risks associated with resource ID
+
     @app_context
     def handle_create_update(self, port_id):
         LOG.debug("Handle start/update for %s", port_id)

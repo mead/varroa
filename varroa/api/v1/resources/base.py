@@ -16,12 +16,16 @@ from flask import request
 import flask_restful
 
 from varroa.common import keystone
+from varroa import manager
 from varroa import policy
 
 API_LIMIT = 1000
 
 
 class Resource(flask_restful.Resource):
+    def __init__(self):
+        self.manager = manager.Manager()
+
     def authorize(self, rule, target={}, do_raise=True):
         rule = self.POLICY_PREFIX % rule
         enforcer = policy.get_enforcer()
