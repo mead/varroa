@@ -22,6 +22,7 @@ class IPUsageSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_relationships = True
         datetimeformat = '%Y-%m-%dT%H:%M:%S+00:00'
+        exclude = ('id',)
 
 
 ip_usage_list = IPUsageSchema(many=True)
