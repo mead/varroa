@@ -15,11 +15,10 @@ from varroa.tests.unit import base
 
 
 class TestIPUsageAPI(base.ApiTestCase):
-
     def test_ip_usage_list(self):
         self.create_ip_usage()
-        response = self.client.get('/v1/ip-usage/')
+        response = self.client.get("/v1/ip-usage/")
 
         self.assert200(response)
-        results = response.get_json().get('results')
+        results = response.get_json().get("results")
         self.assertEqual(1, len(results))

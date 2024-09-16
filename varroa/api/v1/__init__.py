@@ -15,5 +15,4 @@ from varroa.api.v1.resources import ip_usage
 
 
 def initialize_resources(api):
-    api.add_resource(
-        ip_usage.IPUsageList, '/v1/ip-usage/')
+    api.add_resource(ip_usage.IPUsageList, "/v1/ip-usage/")

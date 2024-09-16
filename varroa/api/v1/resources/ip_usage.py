@@ -28,7 +28,6 @@ LOG = logging.getLogger(__name__)
 
 
 class IPUsageList(base.Resource):
-
     POLICY_PREFIX = policies.IP_USAGE_PREFIX
     schema = schemas.ip_usage_list
 
@@ -40,23 +39,23 @@ class IPUsageList(base.Resource):
 
     def get(self, **kwargs):
         try:
-            self.authorize('list')
+            self.authorize("list")
         except policy.PolicyNotAuthorized:
             flask_restful.abort(403, message="Not authorised")
 
         parser = reqparse.RequestParser()
-        parser.add_argument('limit', type=int, location='args')
-        parser.add_argument('all_projects', type=bool, location='args')
-        parser.add_argument('project_id', type=str, location='args')
-        parser.add_argument('ip', type=str, location='args')
+        parser.add_argument("limit", type=int, location="args")
+        parser.add_argument("all_projects", type=bool, location="args")
+        parser.add_argument("project_id", type=str, location="args")
+        parser.add_argument("ip", type=str, location="args")
         args = parser.parse_args()
         query = self._get_ip_usage(self.context.project_id)
-        if self.authorize('list:all', do_raise=False):
-            project_id = args.get('project_id')
-            if args.get('all_projects') or project_id:
+        if self.authorize("list:all", do_raise=False):
+            project_id = args.get("project_id")
+            if args.get("all_projects") or project_id:
                 query = self._get_ip_usage(project_id)
 
-        if args.get('ip'):
-            query = query.filter_by(ip=args.get('ip'))
+        if args.get("ip"):
+            query = query.filter_by(ip=args.get("ip"))
 
         return self.paginate(query, args)

@@ -33,9 +33,10 @@ LOG = logging.getLogger(__name__)
 
 
 rfc1918 = re.compile(
-    r'^(10(\.(25[0-5]|2[0-4][0-9]|1[0-9]{1,2}|[0-9]{1,2})){3}|'
-    r'((172\.(1[6-9]|2[0-9]|3[01]))|'
-    r'192\.168)(\.(25[0-5]|2[0-4][0-9]|1[0-9]{1,2}|[0-9]{1,2})){2})$')
+    r"^(10(\.(25[0-5]|2[0-4][0-9]|1[0-9]{1,2}|[0-9]{1,2})){3}|"
+    r"((172\.(1[6-9]|2[0-9]|3[01]))|"
+    r"192\.168)(\.(25[0-5]|2[0-4][0-9]|1[0-9]{1,2}|[0-9]{1,2})){2})$"
+)
 
 
 def app_context(f):
@@ -43,44 +44,47 @@ def app_context(f):
     def decorated(self, *args, **kwargs):
         with self.app.app_context():
             return f(self, *args, **kwargs)
+
     return decorated
 
 
-class NotificationEndpoints(object):
-
+class NotificationEndpoints:
     def __init__(self):
         self.app = app.create_app(init_config=False)
         self.notifier = rpc.get_notifier()
 
     def sample(self, ctxt, publisher_id, event_type, payload, metadata):
         try:
-            LOG.debug('Processing notification for payload %s', payload)
-            traits = {d[0]: d[2] for d in payload[0]['traits']}
-            event_type = payload[0].get('event_type')
-            generated = payload[0].get('generated')
-            port_id = traits.get('resource_id')
+            LOG.debug("Processing notification for payload %s", payload)
+            traits = {d[0]: d[2] for d in payload[0]["traits"]}
+            event_type = payload[0].get("event_type")
+            generated = payload[0].get("generated")
+            port_id = traits.get("resource_id")
 
-            if event_type == 'port.delete.end':
+            if event_type == "port.delete.end":
                 self.handle_end(port_id, generated)
-            elif event_type == 'port.create.end':
+            elif event_type == "port.create.end":
                 self.handle_create_update(port_id)
-            elif event_type == 'port.update.end':
+            elif event_type == "port.update.end":
                 self.handle_create_update(port_id)
             else:
                 LOG.debug("Received unhandled event %s", event_type)
                 return
         except Exception as e:
-            LOG.error('Unable to handle notification: %s', payload)
+            LOG.error("Unable to handle notification: %s", payload)
             LOG.exception(e)
         return messaging.NotificationResult.HANDLED
 
     @app_context
     def handle_end(self, port_id, generated):
         LOG.debug("Handle end for %s", port_id)
-        end = datetime.datetime.strptime(generated, '%Y-%m-%dT%H:%M:%S.%f')
+        end = datetime.datetime.strptime(generated, "%Y-%m-%dT%H:%M:%S.%f")
 
-        ip_usage = db.session.query(models.IPUsage).filter_by(
-            port_id=port_id).one_or_none()
+        ip_usage = (
+            db.session.query(models.IPUsage)
+            .filter_by(port_id=port_id)
+            .one_or_none()
+        )
         if ip_usage is not None:
             ip_usage.end = end
             db.session.add(ip_usage)
@@ -97,15 +101,16 @@ class NotificationEndpoints(object):
             LOG.error("Failed to find port with ID %s", port_id)
             return
 
-        if port.device_owner.startswith('compute:'):
-            resource_type = 'instance'
+        if port.device_owner.startswith("compute:"):
+            resource_type = "instance"
         else:
-            LOG.warning("Port device owner %s not supported",
-                        port.device_owner)
+            LOG.warning(
+                "Port device owner %s not supported", port.device_owner
+            )
             return
 
         try:
-            ipaddress = port.fixed_ips[0].get('ip_address')
+            ipaddress = port.fixed_ips[0].get("ip_address")
         except Exception:
             LOG.error("Port %s has no ipaddress", port.id)
             return
@@ -114,17 +119,23 @@ class NotificationEndpoints(object):
             LOG.debug("Skipping private IP %s", ipaddress)
             return
 
-        ip_usage = db.session.query(models.IPUsage).filter_by(
-            port_id=port_id).one_or_none()
+        ip_usage = (
+            db.session.query(models.IPUsage)
+            .filter_by(port_id=port_id)
+            .one_or_none()
+        )
         if ip_usage is None:
-            port_created = datetime.datetime.strptime(port.created_at,
-                                                      '%Y-%m-%dT%H:%M:%SZ')
-            ip_usage = models.IPUsage(ip=ipaddress,
-                                      project_id=port.project_id,
-                                      port_id=port.id,
-                                      resource_id=port.device_id,
-                                      resource_type=resource_type,
-                                      start=port_created)
+            port_created = datetime.datetime.strptime(
+                port.created_at, "%Y-%m-%dT%H:%M:%SZ"
+            )
+            ip_usage = models.IPUsage(
+                ip=ipaddress,
+                project_id=port.project_id,
+                port_id=port.id,
+                resource_id=port.device_id,
+                resource_type=resource_type,
+                start=port_created,
+            )
 
         else:
             ip_usage.resource_id = port.device_id

@@ -13,7 +13,7 @@
 
 import pbr.version
 
-version_info = pbr.version.VersionInfo('varroa')
+version_info = pbr.version.VersionInfo("varroa")
 
 
 def vendor_string():

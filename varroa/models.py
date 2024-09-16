@@ -24,8 +24,16 @@ class IPUsage(db.Model):
     start = db.Column(db.DateTime(), nullable=False)
     end = db.Column(db.DateTime(), nullable=True)
 
-    def __init__(self, ip, project_id, port_id, resource_id, resource_type,
-                 start, end=None):
+    def __init__(
+        self,
+        ip,
+        project_id,
+        port_id,
+        resource_id,
+        resource_type,
+        start,
+        end=None,
+    ):
         self.ip = ip
         self.project_id = project_id
         self.port_id = port_id

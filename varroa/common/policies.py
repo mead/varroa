@@ -16,44 +16,44 @@ from oslo_policy import policy
 
 
 CONF = cfg.CONF
-_POLICY_PATH = '/etc/varroa/policy.yaml'
+_POLICY_PATH = "/etc/varroa/policy.yaml"
 
 
 enforcer = policy.Enforcer(CONF, policy_file=_POLICY_PATH)
 
-READER_OR_OWNER = 'reader_or_owner'
+READER_OR_OWNER = "reader_or_owner"
 
 base_rules = [
     policy.RuleDefault(
-        name='admin_required',
-        check_str='role:admin or is_admin:1'),
-    policy.RuleDefault(
-        name='owner',
-        check_str='project_id:%(project_id)s'),
+        name="admin_required", check_str="role:admin or is_admin:1"
+    ),
+    policy.RuleDefault(name="owner", check_str="project_id:%(project_id)s"),
     policy.RuleDefault(
         name=READER_OR_OWNER,
-        check_str='role:reader or (role:reader and rule:owner)'),
+        check_str="role:reader or (role:reader and rule:owner)",
+    ),
 ]
 
 IP_USAGE_PREFIX = "varroa:ip_usage:%s"
 
 ip_usage_rules = [
     policy.DocumentedRuleDefault(
-        name=IP_USAGE_PREFIX % 'list',
-        check_str='',
-        scope_types=['system', 'project'],
-        description='List ip usage.',
-        operations=[{'path': '/v1/ip-usage/',
-                     'method': 'GET'},
-                    {'path': '/v1/ip-usage/',
-                     'method': 'HEAD'}]),
+        name=IP_USAGE_PREFIX % "list",
+        check_str="",
+        scope_types=["system", "project"],
+        description="List ip usage.",
+        operations=[
+            {"path": "/v1/ip-usage/", "method": "GET"},
+            {"path": "/v1/ip-usage/", "method": "HEAD"},
+        ],
+    ),
     policy.DocumentedRuleDefault(
-        name=IP_USAGE_PREFIX % 'list:all',
-        check_str='role:reader',
-        scope_types=['system'],
-        description='List all ip usage.',
-        operations=[{'path': '/v1/ip-usage/',
-                     'method': 'GET'}]),
+        name=IP_USAGE_PREFIX % "list:all",
+        check_str="role:reader",
+        scope_types=["system"],
+        description="List all ip usage.",
+        operations=[{"path": "/v1/ip-usage/", "method": "GET"}],
+    ),
 ]
 
 enforcer.register_defaults(base_rules)
