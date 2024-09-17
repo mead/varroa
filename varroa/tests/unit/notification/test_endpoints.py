@@ -86,7 +86,7 @@ class TestEndpoints(base.TestCase):
         self.assertIsNone(ip_usage.end)
 
     @mock.patch("varroa.notification.endpoints.clients")
-    def test_port_create_unsuported_device_id(self, mock_clients, mock_app):
+    def test_port_create_unsupported_device_id(self, mock_clients, mock_app):
         client = mock_clients.get_openstack.return_value
         port = mock.Mock(device_owner="floatingip:")
         client.get_port_by_id.return_value = port
