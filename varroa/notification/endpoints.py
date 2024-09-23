@@ -13,7 +13,6 @@
 
 import datetime
 import functools
-import re
 
 import openstack
 from oslo_config import cfg
@@ -24,19 +23,13 @@ from varroa import app
 from varroa.common import clients
 from varroa.common import keystone
 from varroa.common import rpc
+from varroa.common import utils
 from varroa.extensions import db
 from varroa import models
 
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
-
-
-rfc1918 = re.compile(
-    r"^(10(\.(25[0-5]|2[0-4][0-9]|1[0-9]{1,2}|[0-9]{1,2})){3}|"
-    r"((172\.(1[6-9]|2[0-9]|3[01]))|"
-    r"192\.168)(\.(25[0-5]|2[0-4][0-9]|1[0-9]{1,2}|[0-9]{1,2})){2})$"
-)
 
 
 def app_context(f):
@@ -117,7 +110,7 @@ class NotificationEndpoints:
             LOG.error("Port %s has no ipaddress", port.id)
             return
 
-        if rfc1918.match(ipaddress):
+        if utils.is_private_ip(ipaddress):
             LOG.debug("Skipping private IP %s", ipaddress)
             return
 

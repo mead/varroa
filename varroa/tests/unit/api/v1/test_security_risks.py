@@ -112,6 +112,22 @@ class TestAdminSecurityRisksAPI(base.ApiTestCase):
         error_data = response.get_json()
         self.assertIn('Type does not exist', error_data['error_message'])
 
+    def test_security_risk_create_with_private_ip(self):
+        sr_type = self.create_security_risk_type()
+        data = {
+            "ipaddress": "192.168.1.100",  # Private IP address
+            "time": "2024-03-01T12:00:00+00:00",
+            "type_id": sr_type.id,
+            'expires': '2024-03-02T12:00:00+00:00',
+        }
+        response = self.client.post("/v1/security-risks/", json=data)
+
+        self.assert400(response)
+        error_data = response.get_json()
+        self.assertIn(
+            'Private IP addresses are not allowed', error_data['error_message']
+        )
+
     def test_security_risk_delete(self):
         risk = self.create_security_risk()
         response = self.client.delete(f"/v1/security-risks/{risk.id}/")

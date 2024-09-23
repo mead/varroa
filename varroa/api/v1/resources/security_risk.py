@@ -23,6 +23,7 @@ from varroa.api.v1.resources import base
 from varroa.api.v1.schemas import security_risk as schemas
 from varroa.common import exceptions
 from varroa.common import policies
+from varroa.common import utils
 from varroa.extensions import db
 from varroa import models
 
@@ -79,6 +80,12 @@ class SecurityRiskList(base.Resource):
             return {'error_message': "Type does not exist"}, 404
         except marshmallow.ValidationError as err:
             return {'error_message': err.messages}, 422
+
+        # Check if the IP address is private
+        if utils.is_private_ip(security_risk.ipaddress):
+            return {
+                'error_message': 'Private IP addresses are not allowed'
+            }, 400
 
         try:
             security_risk = self.manager.create_security_risk(
