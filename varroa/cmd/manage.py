@@ -68,9 +68,15 @@ def backfill_ports():
                 LOG.debug("Skipping private IP %s", ipaddress)
                 continue
 
-            port_created = datetime.datetime.strptime(
-                port.created_at, "%Y-%m-%dT%H:%M:%SZ"
-            )
+            try:
+                port_created = datetime.datetime.strptime(
+                    port.created_at, "%Y-%m-%dT%H:%M:%SZ"
+                )
+            except TypeError as e:
+                LOG.error("Port %s has an invalid created_at", port.id)
+                LOG.exception(e)
+                continue
+
             ip_usage = models.IPUsage(
                 ip=ipaddress,
                 project_id=port.project_id,
