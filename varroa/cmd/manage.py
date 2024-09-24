@@ -50,6 +50,8 @@ def backfill_ports():
         if ip_usage is None:
             if port.device_owner.startswith("compute:"):
                 resource_type = "instance"
+            elif port.device_owner == "network:dhcp":
+                resource_type = "network:dhcp"
             else:
                 LOG.warning(
                     "Port %s device owner %s not supported",
@@ -58,14 +60,10 @@ def backfill_ports():
                 )
                 continue
 
-            try:
-                ipaddress = port.fixed_ips[0].get("ip_address")
+            try: 
+                ipaddresses = [fixed_ip.get("ip_address") for fixed_ip in port.fixed_ips]
             except Exception:
-                LOG.error("Port %s has no ipaddress", port.id)
-                continue
-
-            if utils.is_private_ip(ipaddress):
-                LOG.debug("Skipping private IP %s", ipaddress)
+                LOG.error("Port %s could not iterate fixed_ips to gather their ip_address", port.id)
                 continue
 
             try:
@@ -77,14 +75,19 @@ def backfill_ports():
                 LOG.exception(e)
                 continue
 
-            ip_usage = models.IPUsage(
-                ip=ipaddress,
-                project_id=port.project_id,
-                port_id=port.id,
-                resource_id=port.device_id,
-                resource_type=resource_type,
-                start=port_created,
-            )
+            for ipaddress in ipaddresses:
+                if utils.is_private_ip(ipaddress):
+                    LOG.debug("Skipping private IP %s on port %s", ipaddress, port.id)
+                else:
+                    ip_usage = models.IPUsage(
+                        ip=ipaddress,
+                        project_id=port.project_id,
+                        port_id=port.id,
+                        resource_id=port.device_id,
+                        resource_type=resource_type,
+                        start=port_created,
+                    )
+                    db.session.add(ip_usage)
+                    db.session.commit()
 
-            db.session.add(ip_usage)
-            db.session.commit()
+
